@@ -1,4 +1,4 @@
-# flexcoder-non-release
+# flexcoder
 
 FlexCoder is a dependency-free Python CLI AI coding assistant.
 
