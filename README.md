@@ -5,7 +5,7 @@ AI coding assistant TUI — alternative to opencode / claude code / codex.
 ## Install
 
 ```bash
-pip install -e .
+pip install flexcoder
 ```
 
 ## File structure
