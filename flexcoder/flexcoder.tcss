@@ -1,0 +1,306 @@
+/* flexcoder.tcss — rounded corners everywhere */
+
+/* ══ Global ══════════════════════════════════════════════════════════════════ */
+Screen {
+    background: #0d0f14;
+    color: #c8d0e0;
+}
+
+/* ══ Main chat ════════════════════════════════════════════════════════════════ */
+
+#header-box {
+    height: 9;
+    border: round #2a3550;
+    background: #0e1218;
+    padding: 1 2;
+    margin: 1 1 0 1;
+}
+
+#header-left  { width: 1fr; }
+#header-right {
+    width: 36;
+    padding-left: 2;
+    align: left top;
+}
+
+.header-ascii          { color: #4a7fd4; text-style: bold; }
+#header-provider-label { color: #607090; height: 1; }
+#header-provider-value { height: 1; text-style: bold; }
+#header-model-label    { color: #607090; height: 1; margin-top: 1; }
+#header-model-value    { height: 1; text-style: bold; }
+#header-flags          { color: #607090; height: 1; margin-top: 1; }
+
+#chat-log {
+    height: 1fr;
+    background: #0d0f14;
+    padding: 1 2;
+    margin: 0 1;
+    scrollbar-color: #2a3550 #0d0f14;
+    border: round #1a2030;
+}
+
+#input-box {
+    height: 5;
+    border: round #2a3550;
+    background: #0e1218;
+    padding: 0 1;
+    margin: 0 1 0 1;
+}
+
+#chat-input {
+    background: #0e1218;
+    border: none;
+    color: #e0e8f0;
+    height: 3;
+    padding: 0 1;
+}
+#chat-input:focus {
+    border: none;
+    background: #111520;
+}
+
+#footer-bar {
+    height: 1;
+    background: #0a0c12;
+    padding: 0 2;
+    layout: horizontal;
+    margin: 0 1 1 1;
+}
+#footer-left  { width: 1fr; color: #506080; }
+#footer-right { width: auto; color: #506080; text-align: right; }
+
+/* ══ Shared modal chrome ════════════════════════════════════════════════════ */
+.col-header  { height: 1; color: #607090; text-align: center; margin-bottom: 1; }
+.field-label { height: 1; color: #607090; margin-top: 1; margin-bottom: 0; }
+.separator   { height: 1; color: #2a3550; margin: 1 0; }
+
+/* ══ Shared list views ══════════════════════════════════════════════════════ */
+ListView {
+    background: #0e1520;
+    border: round #2a3550;
+    height: 1fr;
+    scrollbar-color: #2a3550 #0e1520;
+}
+ListView > ListItem {
+    background: #0e1520;
+    padding: 0 1;
+    height: 2;
+}
+ListView > ListItem.--highlight { background: #1a2a48; }
+ListView > ListItem:hover       { background: #162038; }
+
+/* ══ Shared buttons ═════════════════════════════════════════════════════════ */
+.btn-confirm {
+    width: 22;
+    margin-right: 2;
+    background: #1a4a2a;
+    color: #4ae882;
+    border: round #2a7040;
+}
+.btn-confirm:hover { background: #1f5c34; }
+
+.btn-cancel {
+    width: 18;
+    background: #4a1a1a;
+    color: #e85050;
+    border: round #702020;
+}
+.btn-cancel:hover { background: #5c2020; }
+
+.btn-action {
+    background: #1e3a6e;
+    color: #8ab4e8;
+    border: round #2a5090;
+}
+.btn-action:hover { background: #2a4e90; }
+
+.btn-add {
+    background: #1a3a1a;
+    color: #80d080;
+    border: round #2a5a2a;
+    width: 100%;
+    margin-top: 1;
+}
+.btn-add:hover { background: #1f4a1f; }
+
+/* ══ All modals: rounded border + dark bg ════════════════════════════════════ */
+ModalScreen > Vertical,
+ModalScreen > Horizontal {
+    border: round #3a6090;
+    background: #111825;
+    padding: 1 2;
+}
+
+/* ══ Provider settings ══════════════════════════════════════════════════════ */
+ProviderSettingsScreen { align: center middle; }
+
+#ps-root {
+    background: #111825;
+    border: round #3a6090;
+    width: 90;
+    height: 42;
+    padding: 1 2;
+}
+#ps-title { height: 2; text-align: center; color: #5a9fe8; padding-bottom: 1; }
+#ps-body  { height: 1fr; }
+
+#ps-left {
+    width: 26;
+    height: 100%;
+    border-right: solid #1e2d48;
+    padding-right: 1;
+}
+#ps-right {
+    width: 1fr;
+    height: 100%;
+    padding-left: 2;
+    overflow-y: auto;
+}
+#ps-prov-label { height: 1; margin-bottom: 1; }
+
+#ps-key-input {
+    height: 3;
+    background: #0e1520;
+    border: round #2a3a58;
+    color: #e0e8f0;
+    margin-bottom: 1;
+}
+#ps-key-input:focus { border: round #4a7fd4; }
+
+#ps-key-row    { height: 3; margin-bottom: 0; }
+#ps-key-status { height: 1; }
+
+#ps-model-row {
+    height: 2;
+    align: left middle;
+    margin-top: 1;
+}
+#ps-model-title { width: 1fr; color: #8ab4e8; text-style: bold; }
+#ps-model-list  { height: 9; background: #0e1520; border: round #2a3550; }
+#ps-fetch-status { height: 1; margin-bottom: 1; }
+#ps-footer { height: 3; margin-top: 1; align: center middle; }
+
+/* ══ Add provider popup ══════════════════════════════════════════════════════ */
+AddProviderScreen { align: center middle; }
+
+#ap-root {
+    background: #111825;
+    border: round #3a6090;
+    width: 60;
+    height: auto;
+    padding: 1 2;
+}
+#ap-title { height: 2; text-align: center; color: #5a9fe8; padding-bottom: 1; }
+
+#ap-name, #ap-key, #ap-url, #ap-models-url {
+    height: 3;
+    background: #0e1520;
+    border: round #2a3a58;
+    color: #e0e8f0;
+    margin-bottom: 1;
+}
+#ap-name:focus, #ap-key:focus,
+#ap-url:focus, #ap-models-url:focus { border: round #4a7fd4; }
+
+#ap-switch-row { height: 3; align: left middle; margin-bottom: 1; }
+#ap-key-label  { color: #8ab4e8; }
+#ap-status     { height: 1; }
+#ap-footer     { height: 3; margin-top: 1; align: center middle; }
+
+/* ══ Tool approval popup ════════════════════════════════════════════════════ */
+ApprovalScreen { align: center middle; }
+
+#ap2-root {
+    background: #1a1410;
+    border: round #8a5020;
+    width: 64;
+    height: auto;
+    padding: 1 2;
+}
+#ap2-title { height: 2; text-align: center; color: #e8a020; }
+#ap2-body  { height: auto; color: #d0b080; margin: 1 0; }
+#ap2-footer { height: 3; margin-top: 1; align: center middle; }
+
+/* ══ Selector ═══════════════════════════════════════════════════════════════ */
+SelectorScreen { align: center middle; }
+
+#sel-root {
+    background: #111825;
+    border: round #3a6090;
+    width: 80;
+    height: 32;
+    padding: 1 2;
+}
+#sel-title { height: 2; text-align: center; color: #5a9fe8; padding-bottom: 1; }
+#sel-body  { height: 1fr; }
+
+#sel-left {
+    width: 28;
+    height: 100%;
+    border-right: solid #1e2d48;
+    padding-right: 1;
+}
+#sel-right { width: 1fr; height: 100%; padding-left: 1; }
+#sel-hint   { height: 1; margin-bottom: 1; }
+#sel-footer { height: 3; margin-top: 1; align: center middle; }
+
+/* ══ AI Settings ════════════════════════════════════════════════════════════ */
+AISettingsScreen { align: center middle; }
+
+#ais-root {
+    background: #111825;
+    border: round #3a6090;
+    width: 62;
+    height: auto;
+    padding: 1 2;
+}
+#ais-title { height: 2; text-align: center; color: #5a9fe8; padding-bottom: 1; }
+
+.ais-row   { height: 3; align: left middle; margin-bottom: 1; }
+.ais-label { width: 22; color: #8ab4e8; }
+.ais-input {
+    width: 1fr;
+    height: 3;
+    background: #0e1520;
+    border: round #2a3a58;
+    color: #e0e8f0;
+}
+.ais-input:focus { border: round #4a7fd4; }
+#ais-footer { height: 3; margin-top: 1; align: center middle; }
+
+/* ══ Session browser ════════════════════════════════════════════════════════ */
+SessionBrowserScreen { align: center middle; }
+
+#sb-root {
+    background: #111825;
+    border: round #3a6090;
+    width: 95%;
+    height: 80%;
+    padding: 1 2;
+}
+#sb-title { height: 2; color: #5a9fe8; padding-bottom: 1; }
+
+DataTable           { height: 1fr; background: #0e1520; border: round #2a3550; }
+DataTable > .datatable--header { background: #1a2a48; color: #8ab4e8; }
+DataTable > .datatable--cursor { background: #1e3a6e; color: #c8d8f0; }
+#sb-footer { height: 3; margin-top: 1; align: center middle; }
+
+/* ══ Help ═══════════════════════════════════════════════════════════════════ */
+HelpScreen { align: center middle; }
+
+#help-root {
+    background: #111825;
+    border: round #3a6090;
+    width: 74;
+    max-height: 90%;
+    padding: 1 2;
+}
+#help-text  { height: auto; overflow-y: auto; color: #c0ccdc; }
+#help-close {
+    margin-top: 1;
+    width: 100%;
+    background: #1e3a6e;
+    color: #8ab4e8;
+    border: round #3a6090;
+}
+#help-close:hover { background: #2a4e90; }
