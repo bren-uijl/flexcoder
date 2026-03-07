@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flexcoder"
+version = "1.0.0"
+description = "AI coding assistant TUI — multi-provider, session-aware"
+requires-python = ">=3.11"
+dependencies = [
+    "textual>=0.80",
+    "rich>=13",
+    "requests>=2.31",
+    "tomlkit>=0.12",
+]
+
+[project.scripts]
+flexcoder = "flexcoder.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["flexcoder*"]
+
+[tool.setuptools.package-data]
+flexcoder = ["*.tcss"]

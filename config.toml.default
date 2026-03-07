@@ -1,0 +1,36 @@
+# flexcoder — configuration
+# This file lives at ~/.flexcoder/config.toml
+# Edit manually or use the TUI: Ctrl+E (providers) / Ctrl+T (AI settings)
+
+[general]
+provider     = "ollama"
+model        = ""           # empty = not set; choose in Ctrl+P after fetching models
+auto_approve = true
+show_output  = false
+
+[api_keys]
+# Stored keys (or set as environment variables instead):
+#   ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY,
+#   MISTRAL_API_KEY, OPENROUTER_API_KEY
+anthropic  = ""
+openai     = ""
+gemini     = ""
+mistral    = ""
+openrouter = ""
+
+[models]
+# Populated automatically by Ctrl+E → Fetch Models.
+# No models are set by default — you must fetch them.
+ollama     = []
+claude     = []
+chatgpt    = []
+gemini     = []
+mistral    = []
+openrouter = []
+
+[ai_settings]
+temperature  = 1.0
+max_tokens   = 4096
+top_p        = 1.0
+top_k        = -1        # -1 = disabled
+system_prompt = ""       # extra instructions appended to the built-in system prompt
