@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Package build artifacts
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Config with personal API keys — do NOT commit this
+# (the default template config.toml.default is fine to commit)
+flexcoder/config.toml
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
