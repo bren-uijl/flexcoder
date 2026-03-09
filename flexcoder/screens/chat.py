@@ -96,6 +96,9 @@ class FlexCoderApp(App):
         self._session_id = session_id or sess_mod.new_id()
         self._messages:  list[dict] = []
         self._cwd = str(Path.cwd())
+        # If started from the repository root (contains a 'flexcoder' subdirectory), use the user's home directory instead
+        if (Path(self._cwd) / "flexcoder").is_dir():
+            self._cwd = str(Path.home())
         self._pending_tools: list[tuple[str, tuple]] = []
 
         if session_id:
@@ -103,13 +106,13 @@ class FlexCoderApp(App):
             if existing:
                 self._messages = existing.get("messages", [])
                 cfg_mod.set_val(self._doc, "general", "provider",
-                                existing.get("provider", self._provider))
+                                 existing.get("provider", self._provider))
                 cfg_mod.set_val(self._doc, "general", "model",
-                                existing.get("model",    self._model))
+                                 existing.get("model",    self._model))
                 self._cwd = existing.get("cwd", self._cwd)
 
         _up = os.environ.get("USERPROFILE") or os.environ.get("HOME") or ""
-        self._warn_home = False
+        self._warn_home = bool(_up and Path(self._cwd).resolve() == Path(_up).resolve())
 
         # First-run: no model set anywhere
         models_exist = any(
