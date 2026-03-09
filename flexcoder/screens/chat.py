@@ -109,7 +109,7 @@ class FlexCoderApp(App):
                 self._cwd = existing.get("cwd", self._cwd)
 
         _up = os.environ.get("USERPROFILE") or os.environ.get("HOME") or ""
-        self._warn_home = bool(_up and Path(self._cwd).resolve() == Path(_up).resolve())
+        self._warn_home = False
 
         # First-run: no model set anywhere
         models_exist = any(
