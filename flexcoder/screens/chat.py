@@ -1,4 +1,4 @@
-"""screens/chat.py — main flexcoder chat TUI."""
+"""screens/chat.py — opencode-style minimal flexcoder TUI."""
 
 from __future__ import annotations
 import os
@@ -20,10 +20,10 @@ from flexcoder import providers as prov_mod
 from flexcoder import ai as ai_mod
 from flexcoder import tools as tools_mod
 from flexcoder import system_prompt as sp_mod
-from flexcoder.art import FLEXCODER, GOODBYE
+from flexcoder.art import GOODBYE
 
 from flexcoder.screens.help import HelpScreen
-from flexcoder.screens.selector import SelectorScreen
+from flexcoder.screens.model_picker import ModelPickerScreen
 from flexcoder.screens.session_browser import SessionBrowserScreen
 from flexcoder.screens.provider_settings import ProviderSettingsScreen
 from flexcoder.screens.ai_settings import AISettingsScreen
@@ -34,8 +34,6 @@ from flexcoder._css import CSS_PATH as _CSS
 # ── Tool approval popup ───────────────────────────────────────────────────────
 
 class ApprovalScreen(ModalScreen):
-    """Small popup asking to approve/deny a tool call."""
-
     BINDINGS = [
         Binding("enter",  "approve", "Approve"),
         Binding("escape", "deny",    "Deny"),
@@ -71,7 +69,8 @@ class FlexCoderApp(App):
         Binding("ctrl+h", "show_help",     "Help",         priority=True),
         Binding("ctrl+n", "new_session",   "New",          priority=True),
         Binding("ctrl+s", "show_sessions", "Sessions",     priority=True),
-        Binding("ctrl+p", "show_selector", "Provider",     priority=True),
+        Binding("tab",    "show_picker",   "Switch model", priority=True),
+        Binding("ctrl+p", "show_commands", "Commands",     priority=True),
         Binding("ctrl+e", "show_settings", "Settings",     priority=True),
         Binding("ctrl+t", "show_ai_cfg",   "AI settings",  priority=True),
         Binding("ctrl+l", "clear_chat",    "Clear",        priority=True),
@@ -82,12 +81,9 @@ class FlexCoderApp(App):
     auto_approve: reactive = reactive(True)
     show_output:  reactive = reactive(False)
 
-    # ── Init ──────────────────────────────────────────────────────────────────
-
     def __init__(self, session_id: str | None = None):
         super().__init__()
         self._doc = cfg_mod.load()
-        # Load custom providers from config before anything else
         prov_mod._reload_custom(self._doc)
 
         self.auto_approve = bool(cfg_mod.get(self._doc, "general", "auto_approve") or True)
@@ -96,7 +92,6 @@ class FlexCoderApp(App):
         self._session_id = session_id or sess_mod.new_id()
         self._messages:  list[dict] = []
         self._cwd = str(Path.cwd())
-        # If started from the repository root (contains a 'flexcoder' subdirectory), use the user's home directory instead
         if (Path(self._cwd) / "flexcoder").is_dir():
             self._cwd = str(Path.home())
         self._pending_tools: list[tuple[str, tuple]] = []
@@ -106,22 +101,19 @@ class FlexCoderApp(App):
             if existing:
                 self._messages = existing.get("messages", [])
                 cfg_mod.set_val(self._doc, "general", "provider",
-                                 existing.get("provider", self._provider))
+                                existing.get("provider", self._provider))
                 cfg_mod.set_val(self._doc, "general", "model",
-                                 existing.get("model",    self._model))
+                                existing.get("model", self._model))
                 self._cwd = existing.get("cwd", self._cwd)
-        # Ensure we don’t keep the repository root as cwd – switch to home if necessary
+
         if (Path(self._cwd) / "flexcoder").is_dir():
             self._cwd = str(Path.home())
 
-        # Show warning if running from the user's home directory (regardless of env vars)
         home_path = Path.home().resolve()
         self._warn_home = Path(self._cwd).resolve() == home_path
 
-        # First-run: no model set anywhere
         models_exist = any(
-            cfg_mod.get_models(self._doc, k)
-            for k in prov_mod.PROVIDER_KEYS
+            cfg_mod.get_models(self._doc, k) for k in prov_mod.PROVIDER_KEYS
         )
         self._first_run = not models_exist
 
@@ -133,51 +125,38 @@ class FlexCoderApp(App):
     def _model(self) -> str:
         return str(cfg_mod.get(self._doc, "general", "model") or "")
 
-    # ── Layout ────────────────────────────────────────────────────────────────
+    # ── Layout — opencode style ───────────────────────────────────────────────
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            with Horizontal(id="header-box"):
-                with Vertical(id="header-left"):
-                    for i, line in enumerate(FLEXCODER):
-                        yield Static(line, id=f"ascii-{i}", classes="header-ascii")
-                with Vertical(id="header-right"):
-                    yield Static("Selected provider:  [dim]Ctrl+P[/dim]",
-                                 id="header-provider-label")
-                    yield Static("", id="header-provider-value")
-                    yield Static("Selected model:     [dim]Ctrl+P[/dim]",
-                                 id="header-model-label")
-                    yield Static("", id="header-model-value")
-                    yield Static("", id="header-flags")
+        with Vertical(id="fc-root"):
+            # Scrollable chat history
             yield RichLog(id="chat-log", highlight=True, markup=True, wrap=True)
-            with Vertical(id="input-box"):
+            # Bottom input area — the opencode-style bar
+            with Vertical(id="input-area"):
                 yield Input(
-                    placeholder="Ask flexcoder anything…  (/help for commands)",
+                    placeholder="What do you want to build?",
                     id="chat-input",
                 )
-            with Horizontal(id="footer-bar"):
-                yield Static("esc = interrupt", id="footer-left")
-                yield Static("ctrl+c = quit",   id="footer-right")
+                with Horizontal(id="status-bar"):
+                    yield Static("", id="model-badge")
+                    yield Static("", id="status-right")
 
     def on_mount(self):
-        self._refresh_header()
+        self._refresh_badge()
 
         if self._warn_home:
-            self._render("warning",
-                "You are in your home / USERPROFILE directory. "
-                "It is not recommended to run flexcoder here.")
+            self._render("error",
+                "Running in home directory — navigate to a project folder first.")
 
         if self._first_run:
-            # Open provider settings as a popup immediately
             def _after_setup(result):
                 if result:
                     self._doc = result
                     prov_mod._reload_custom(self._doc)
-                    self._refresh_header()
-                    self._render("info", "Provider configured. Now press Ctrl+P to select a model.")
+                    self._refresh_badge()
+                    self._render("info", "Provider configured. Press Tab to select a model.")
                 else:
-                    self._render("info",
-                        "No provider configured yet. Press Ctrl+E to set one up.")
+                    self._render("info", "Press Ctrl+E to configure a provider.")
             self.call_after_refresh(
                 lambda: self.push_screen(
                     ProviderSettingsScreen(self._doc, first_run=True), _after_setup
@@ -185,46 +164,54 @@ class FlexCoderApp(App):
             )
         elif not self._model:
             self._render("info",
-                "No model selected — press Ctrl+P to pick one, or Ctrl+E to fetch models first.")
+                "No model selected — press Tab to pick one.")
         else:
             pinfo = prov_mod.PROVIDERS.get(self._provider, {})
-            c     = pinfo.get("color", "white")
-            # Show basic session info without markup tags
-            info_msg = (
-                f"Provider: {pinfo.get('name', self._provider)}  "
-                f"Model: {self._model or '(none)'}  "
-                f"Session: {self._session_id}  "
-                f"cwd: {self._cwd}"
-                )
-            self._render("info", info_msg)
+            self._render("info",
+                f"Session {self._session_id}  ·  cwd: {self._cwd}")
 
         if self._messages:
             self.query_one("#chat-log", RichLog).write(
-                Text.from_markup(
-                    f"[dim]─── Resuming {len(self._messages)} messages ───[/dim]\n"
-                )
+                Text.from_markup(f"[dim]─── {len(self._messages)} messages resumed ───[/dim]\n")
             )
             for m in self._messages:
                 self._render(m["role"], m["content"])
 
         self.query_one("#chat-input", Input).focus()
 
-    # ── Header ────────────────────────────────────────────────────────────────
+    # ── Badge / status bar ────────────────────────────────────────────────────
 
-    def _refresh_header(self):
-        pinfo = prov_mod.PROVIDERS.get(self._provider, {})
-        c     = pinfo.get("color", "white")
-        label = pinfo.get("name", self._provider)
-        model = self._model or "[dim](none)[/dim]"
-        auto  = "[bold green]AUTO[/bold green]"   if self.auto_approve else "[bold red]MANUAL[/bold red]"
-        out   = "[bold yellow]OUT[/bold yellow]"   if self.show_output  else "[bold dim]QUIET[/bold dim]"
-        sid   = f"[dim]{self._session_id}[/dim]"
+    def _refresh_badge(self):
+        pinfo  = prov_mod.PROVIDERS.get(self._provider, {})
+        c      = pinfo.get("color", "white")
+        pname  = pinfo.get("name", self._provider)
+        model  = self._model or "(no model)"
+        auto   = "AUTO" if self.auto_approve else "MANUAL"
+        auto_c = "green" if self.auto_approve else "red"
+
         try:
-            self.query_one("#header-provider-value", Static).update(f"[{c}]{label}[/{c}]")
-            self.query_one("#header-model-value",    Static).update(f"[{c}]{model}[/{c}]")
-            self.query_one("#header-flags",          Static).update(f"{auto}  {out}  {sid}")
-            for i in range(5):
-                self.query_one(f"#ascii-{i}", Static).update(f"[{c}]{FLEXCODER[i]}[/{c}]")
+            # Bottom left: provider + model  (opencode style)
+            badge = (
+                f"[bold {c}]{pname}[/bold {c}]"
+                f"[dim]  {esc(model)}[/dim]"
+            )
+            self.query_one("#model-badge", Static).update(badge)
+
+            # Bottom right: shortcuts hint
+            right = (
+                f"[dim]tab[/dim] switch model"
+                f"  [dim]ctrl+p[/dim] commands"
+            )
+            self.query_one("#status-right", Static).update(right)
+        except Exception:
+            pass
+
+    def _set_status(self, msg: str, color: str = "dim"):
+        try:
+            self.query_one("#status-right", Static).update(
+                f"[{color}]{esc(msg)}[/{color}]" if msg
+                else "[dim]tab[/dim] switch model  [dim]ctrl+p[/dim] commands"
+            )
         except Exception:
             pass
 
@@ -237,7 +224,7 @@ class FlexCoderApp(App):
         match role:
             case "user":
                 log.write(Text.from_markup(
-                    f"[bold cyan]You[/bold cyan]  [dim]›[/dim]  {esc(content)}\n"))
+                    f"[bold #5588dd]You[/bold #5588dd]  [dim]›[/dim]  {esc(content)}\n"))
             case "assistant":
                 log.write(Text.from_markup(
                     f"[bold {c}]AI[/bold {c}]   [dim]›[/dim]  {esc(content)}\n"))
@@ -246,22 +233,13 @@ class FlexCoderApp(App):
                     log.write(Text.from_markup(f"[dim]{esc(content)}[/dim]\n"))
             case "tool_error":
                 log.write(Text.from_markup(
-                    f"[bold red]Tool error[/bold red]  {esc(content)}\n"))
+                    f"[bold red]✘ Tool[/bold red]  {esc(content)}\n"))
             case "info":
                 log.write(Text.from_markup(
-                    f"[bold yellow]•[/bold yellow]  [yellow]{esc(content)}[/yellow]\n"))
+                    f"[dim]{esc(content)}[/dim]\n"))
             case "error":
                 log.write(Text.from_markup(
                     f"[bold red]✘[/bold red]  [red]{esc(content)}[/red]\n"))
-
-    def _status(self, msg: str, color: str = "dim"):
-        try:
-            self.query_one("#footer-left", Static).update(
-                Text.from_markup(f"[{color}]{esc(msg)}[/{color}]") if msg
-                else "esc = interrupt"
-            )
-        except Exception:
-            pass
 
     # ── Input ─────────────────────────────────────────────────────────────────
 
@@ -277,13 +255,13 @@ class FlexCoderApp(App):
             return
 
         if not self._model:
-            self._render("error", "No model selected. Press Ctrl+E → Ctrl+P.")
+            self._render("error", "No model — press Tab to pick one.")
             return
 
         self._messages.append({"role": "user", "content": text})
         self._render("user", text)
         self._persist()
-        self._status("Thinking…", "yellow")
+        self._set_status("thinking…", "yellow")
         self._call_ai()
 
     def _command(self, text: str):
@@ -294,7 +272,6 @@ class FlexCoderApp(App):
             case "/help" | "/h":           self.action_show_help()
             case "/new":                   self.action_new_session()
             case "/sessions":              self.action_show_sessions()
-            case "/provider":              self.action_show_selector()
             case "/settings":              self.action_show_settings()
             case "/model":                 self._switch_model(arg)
             case "/clear":                 self.action_clear_chat()
@@ -306,24 +283,20 @@ class FlexCoderApp(App):
         pkey   = self._provider
         models = cfg_mod.get_models(self._doc, pkey)
         if not model:
-            self._render("info", "Available: " + (", ".join(models) if models else "none"))
-            return
-        if models and model not in models:
-            self._render("error", f"'{model}' not in cached list")
+            self._render("info", "Models: " + (", ".join(models) if models else "none"))
             return
         cfg_mod.set_val(self._doc, "general", "model", model)
         cfg_mod.save(self._doc)
-        self._refresh_header()
+        self._refresh_badge()
         self._render("info", f"Model → {model}")
 
     def _show_status(self):
         pinfo = prov_mod.PROVIDERS.get(self._provider, {})
         self._render("info",
             f"Provider: {pinfo.get('name', self._provider)}  Model: {self._model}  "
-            f"Session: {self._session_id}  Auto: {self.auto_approve}  "
-            f"Output: {self.show_output}  CWD: {self._cwd}")
+            f"Session: {self._session_id}  Auto: {self.auto_approve}  CWD: {self._cwd}")
 
-    # ── AI call (threaded) ────────────────────────────────────────────────────
+    # ── AI call ───────────────────────────────────────────────────────────────
 
     @work(thread=True)
     def _call_ai(self):
@@ -345,7 +318,7 @@ class FlexCoderApp(App):
         self.call_from_thread(self._on_reply, reply, err)
 
     def _on_reply(self, reply: str | None, err: str | None):
-        self._status("")
+        self._set_status("")
         if err:
             self._render("error", err)
             return
@@ -364,18 +337,17 @@ class FlexCoderApp(App):
             else:
                 self._pending_tools = [(name, groups)]
                 self._render("info",
-                    f"Tool pending: [{name}]  — Enter to approve, Esc to cancel")
+                    f"Tool pending: {name}  — Enter to approve, Esc to cancel")
 
     def _run_tool(self, name: str, groups: tuple, outside_approved: bool):
         result = tools_mod.execute(name, groups, self._cwd,
                                    outside_cwd_approved=outside_approved)
         if result.needs_approval:
-            # Shell wants to go outside cwd — ask user via popup
             def _on_approval(allowed: bool):
                 if allowed:
                     self._run_tool(name, groups, outside_approved=True)
                 else:
-                    self._render("info", "Tool denied — command cancelled.")
+                    self._render("info", "Tool denied.")
             self.push_screen(ApprovalScreen(result.approval_prompt), _on_approval)
             return
 
@@ -387,14 +359,14 @@ class FlexCoderApp(App):
         tool_msg = f"[Tool output — {result.tool}]\n{result.output}"
         self._messages.append({"role": "user", "content": tool_msg})
         self._persist()
-        self._status("Processing tool result…", "yellow")
+        self._set_status("processing…", "yellow")
         self._call_ai()
 
     def action_interrupt(self):
         if self._pending_tools:
             self._pending_tools.clear()
-            self._render("info", "Pending tool cancelled.")
-        self._status("")
+            self._render("info", "Tool cancelled.")
+        self._set_status("")
 
     # ── Actions ──────────────────────────────────────────────────────────────
 
@@ -402,15 +374,14 @@ class FlexCoderApp(App):
         self.auto_approve = not self.auto_approve
         cfg_mod.set_val(self._doc, "general", "auto_approve", self.auto_approve)
         cfg_mod.save(self._doc)
-        self._refresh_header()
-        self._status(f"Auto-approve: {'ON' if self.auto_approve else 'OFF'}", "cyan")
+        self._refresh_badge()
+        self._set_status(f"Auto-approve: {'ON' if self.auto_approve else 'OFF'}", "cyan")
 
     def action_toggle_output(self):
         self.show_output = not self.show_output
         cfg_mod.set_val(self._doc, "general", "show_output", self.show_output)
         cfg_mod.save(self._doc)
-        self._refresh_header()
-        self._status(f"Output: {'visible' if self.show_output else 'hidden'}", "cyan")
+        self._set_status(f"Output: {'visible' if self.show_output else 'hidden'}", "cyan")
 
     def action_show_help(self):
         self.push_screen(HelpScreen())
@@ -420,7 +391,7 @@ class FlexCoderApp(App):
         self._session_id = sess_mod.new_id()
         self._messages   = []
         self.query_one("#chat-log", RichLog).clear()
-        self._refresh_header()
+        self._refresh_badge()
         self._render("info", f"New session: {self._session_id}")
 
     def action_show_sessions(self):
@@ -429,33 +400,35 @@ class FlexCoderApp(App):
                 self._load_session(result)
         self.push_screen(SessionBrowserScreen(), cb)
 
-    def action_show_selector(self):
-        def cb(result):
-            if result:
-                prov, model = result
-                cfg_mod.set_val(self._doc, "general", "provider", prov)
-                cfg_mod.set_val(self._doc, "general", "model",    model)
-                cfg_mod.save(self._doc)
-                self._refresh_header()
-                pinfo = prov_mod.PROVIDERS.get(prov, {})
-                self._render("info",
-                    f"Provider → {pinfo.get('name', prov)}  Model → {model}")
-        self.push_screen(SelectorScreen(self._doc, self._provider, self._model), cb)
+    def action_show_picker(self):
+        """Tab — open the models.dev model picker."""
+        self.push_screen(ModelPickerScreen(self._doc), self._on_model_picked)
+
+    def action_show_commands(self):
+        """Ctrl+P — show command palette (for now: help)."""
+        self.push_screen(HelpScreen())
+
+    def _on_model_picked(self, result):
+        if result:
+            provider_key, model_id, model_name = result
+            cfg_mod.set_val(self._doc, "general", "provider", provider_key)
+            cfg_mod.set_val(self._doc, "general", "model", model_id)
+            cfg_mod.save(self._doc)
+            self._refresh_badge()
+            self._render("info", f"Model → {model_name}")
 
     def action_show_settings(self):
         def cb(result):
             if result is not None:
                 self._doc = result
                 prov_mod._reload_custom(self._doc)
-                self._refresh_header()
-                self._render("info", "Provider settings saved.")
+                self._refresh_badge()
         self.push_screen(ProviderSettingsScreen(self._doc), cb)
 
     def action_show_ai_cfg(self):
         def cb(result):
             if result is not None:
                 self._doc = result
-                self._render("info", "AI settings saved.")
         self.push_screen(AISettingsScreen(self._doc), cb)
 
     def action_clear_chat(self):
@@ -479,7 +452,7 @@ class FlexCoderApp(App):
         cfg_mod.set_val(self._doc, "general", "model",
                         existing.get("model", self._model))
         self._cwd = existing.get("cwd", self._cwd)
-        self._refresh_header()
+        self._refresh_badge()
         log = self.query_one("#chat-log", RichLog)
         log.clear()
         self._render("info", f"Resumed: {sid}")

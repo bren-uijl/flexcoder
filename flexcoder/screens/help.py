@@ -6,65 +6,65 @@ from textual.widgets import Button, Static
 from textual.containers import Vertical
 from textual.binding import Binding
 
-_TEXT = """\
-[bold cyan]flexcoder[/bold cyan] — AI Coding Assistant TUI
+_HELP = """[bold cyan]flexcoder[/bold cyan] — AI coding assistant
 
-[bold yellow]KEYBOARD SHORTCUTS[/bold yellow]
-  [bold]Ctrl+A[/bold]   Toggle auto-approve  [dim](header: AUTO / MANUAL)[/dim]
-  [bold]Ctrl+O[/bold]   Toggle output visibility  [dim](header: OUT / QUIET)[/dim]
-  [bold]Ctrl+H[/bold]   This help screen
-  [bold]Ctrl+N[/bold]   New session
-  [bold]Ctrl+S[/bold]   Session browser  [dim](↑↓ + Enter)[/dim]
-  [bold]Ctrl+P[/bold]   Provider / model selector
-  [bold]Ctrl+E[/bold]   Provider settings  [dim](API keys + Fetch Models)[/dim]
-  [bold]Ctrl+T[/bold]   AI generation settings  [dim](temperature, max tokens…)[/dim]
-  [bold]Ctrl+L[/bold]   Clear chat display
-  [bold]Esc[/bold]      Interrupt current AI request / close modal
-  [bold]Ctrl+C[/bold]   Quit
+[bold]Navigation[/bold]
+  [bold]Tab[/bold]          Open model picker (models.dev)
+  [bold]Ctrl+P[/bold]       Command palette / help
+  [bold]Ctrl+E[/bold]       Provider settings (API keys, Fetch Models)
+  [bold]Ctrl+T[/bold]       AI settings (temperature, tokens…)
+  [bold]Ctrl+S[/bold]       Session browser
+  [bold]Ctrl+N[/bold]       New session
+  [bold]Ctrl+L[/bold]       Clear chat
+  [bold]Ctrl+H[/bold]       This help
+  [bold]Esc[/bold]          Cancel / interrupt tool
+  [bold]Ctrl+C[/bold]       Quit
 
-[bold yellow]HEADER INDICATORS[/bold yellow]
-  [bold green]AUTO[/bold green]   Auto-approve ON   [dim]AI actions execute without confirmation[/dim]
-  [bold red]MANUAL[/bold red] Auto-approve OFF  [dim]Each AI action requires approval[/dim]
-  [bold yellow]OUT[/bold yellow]    Output visible    [dim]Tool output shown in chat[/dim]
-  [bold dim]QUIET[/bold dim]  Output hidden     [dim]Only errors shown[/dim]
+[bold]Tool approval[/bold]
+  [bold]Ctrl+A[/bold]       Toggle auto-approve (AUTO/MANUAL)
+  [bold]Ctrl+O[/bold]       Toggle tool output visibility
 
-[bold yellow]CHAT COMMANDS[/bold yellow]
-  [bold]/help[/bold]          Show this screen
-  [bold]/new[/bold]           Start a new session
-  [bold]/sessions[/bold]      Open session browser
-  [bold]/provider[/bold]      Open provider selector
-  [bold]/settings[/bold]      Open AI settings
-  [bold]/model <n>[/bold]  Switch model
-  [bold]/clear[/bold]         Clear chat
-  [bold]/status[/bold]        Show current config
-  [bold]/exit[/bold]          Quit
+[bold]Commands[/bold]  (type in the input bar)
+  [dim]/help[/dim]           This help
+  [dim]/new[/dim]            New session
+  [dim]/sessions[/dim]       Session browser
+  [dim]/model <name>[/dim]   Switch model
+  [dim]/status[/dim]         Show current config
+  [dim]/clear[/dim]          Clear chat
+  [dim]/quit[/dim]           Quit
 
-[bold yellow]STARTUP[/bold yellow]
-  [bold]flexcoder[/bold]                        Default (saved config)
-  [bold]flexcoder ollama gemma3:3b[/bold]       Start with Ollama gemma3:3b
-  [bold]flexcoder continue[/bold]               Resume most recent session
-  [bold]flexcoder continue <id>[/bold]          Resume specific session
-  [bold]flexcoder providers[/bold]              Provider settings TUI
-  [bold]flexcoder settings[/bold]               AI settings TUI
-  [bold]flexcoder sessions[/bold]               Session browser TUI
+[bold]AI tools[/bold]  (the model can use these)
+  [dim]<create_file=path>…</create_file>[/dim]
+  [dim]<read_file=path />[/dim]       (required before editing)
+  [dim]<search_replace=path>…[/dim]
+  [dim]<shell>cmd</shell>[/dim]        (outside cwd needs approval)
+  [dim]<create_directory=path />[/dim]
+  [dim]<move_file source=… destination=… />[/dim]
+  [dim]<insert=path>…</insert>[/dim]
 
-[bold dim]Config:   ~/.flexcoder/config.toml[/bold dim]
-[bold dim]Sessions: ~/.flexcoder/sessions/[/bold dim]
+[bold]CLI[/bold]
+  [dim]flexcoder[/dim]                  Start
+  [dim]flexcoder continue[/dim]         Resume last session
+  [dim]flexcoder continue <id>[/dim]    Resume specific session
+  [dim]flexcoder providers[/dim]        Provider settings
+  [dim]flexcoder sessions[/dim]         Session browser
 """
 
 
 class HelpScreen(ModalScreen):
     BINDINGS = [
-        Binding("escape", "dismiss", "Close"),
-        Binding("ctrl+h", "dismiss", "Close"),
-        Binding("q",      "dismiss", "Close"),
+        Binding("escape", "close", "Close"),
+        Binding("ctrl+h", "close", "Close"),
+        Binding("q",      "close", "Close"),
     ]
 
     def compose(self) -> ComposeResult:
         with Vertical(id="help-root"):
-            yield Static(_TEXT, id="help-text")
-            yield Button("Close  [Esc]", id="help-close", variant="primary")
+            yield Static(_HELP, id="help-text", markup=True)
+            yield Button("Close  [Esc]", id="help-close")
 
-    def on_button_pressed(self, _): self.dismiss()
-    def on_key(self, e):
-        if e.key in ("escape", "q"): self.dismiss()
+    def on_button_pressed(self, e):
+        self.dismiss(None)
+
+    def action_close(self):
+        self.dismiss(None)
