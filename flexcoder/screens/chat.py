@@ -114,8 +114,9 @@ class FlexCoderApp(App):
         if (Path(self._cwd) / "flexcoder").is_dir():
             self._cwd = str(Path.home())
 
-        _up = os.environ.get("USERPROFILE") or os.environ.get("HOME") or ""
-        self._warn_home = bool(_up and Path(self._cwd).resolve() == Path(_up).resolve())
+        # Show warning if running from the user's home directory (regardless of env vars)
+        home_path = Path.home().resolve()
+        self._warn_home = Path(self._cwd).resolve() == home_path
 
         # First-run: no model set anywhere
         models_exist = any(
