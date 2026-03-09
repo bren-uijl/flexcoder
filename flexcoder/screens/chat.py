@@ -110,6 +110,9 @@ class FlexCoderApp(App):
                 cfg_mod.set_val(self._doc, "general", "model",
                                  existing.get("model",    self._model))
                 self._cwd = existing.get("cwd", self._cwd)
+        # Ensure we don’t keep the repository root as cwd – switch to home if necessary
+        if (Path(self._cwd) / "flexcoder").is_dir():
+            self._cwd = str(Path.home())
 
         _up = os.environ.get("USERPROFILE") or os.environ.get("HOME") or ""
         self._warn_home = bool(_up and Path(self._cwd).resolve() == Path(_up).resolve())
