@@ -13,6 +13,6 @@ FLEXCODER_STR = "\n".join(FLEXCODER)
 
 GOODBYE = (
     "\n"
-    + FLEXCODER_STR
+    + "\n".join(f"[#{'4a7fd4'}]{line}[/#{'4a7fd4'}]" for line in FLEXCODER)
     + "\n\nto resume this session:\nflexcoder continue\n"
 )
