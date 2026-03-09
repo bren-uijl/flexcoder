@@ -159,7 +159,7 @@ class FlexCoderApp(App):
         self._refresh_header()
 
         if self._warn_home:
-            self._render("error",
+            self._render("warning",
                 "You are in your home / USERPROFILE directory. "
                 "It is not recommended to run flexcoder here.")
 
@@ -489,5 +489,6 @@ class FlexCoderApp(App):
         )
 
     def on_unmount(self):
-        print(GOODBYE)
-        print(f"Session ID: {self._session_id}")
+        from rich import print as rprint
+        rprint(GOODBYE)
+        rprint(f"Session ID: {self._session_id}")
