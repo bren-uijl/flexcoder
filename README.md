@@ -1,3 +1,4 @@
+> Warning: there's a error after fechting models, i am fixing it.
 # flexcoder
 
 AI coding assistant TUI — alternative to opencode / claude code / codex.
