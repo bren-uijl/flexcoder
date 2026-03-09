@@ -44,7 +44,7 @@ class SelectorScreen(ModalScreen):
                 yield Button("✔  Confirm  [Enter]", id="btn-confirm", classes="btn-confirm")
                 yield Button("✘  Cancel   [Esc]",   id="btn-cancel",  classes="btn-cancel")
 
-    def on_mount(self):
+    async def on_mount(self):
         plist = self.query_one("#sel-prov-list", ListView)
         for key, info in prov_mod.PROVIDERS.items():
             c = info["color"]
@@ -53,11 +53,11 @@ class SelectorScreen(ModalScreen):
             if k == self._sel_prov:
                 plist.index = i
                 break
-        self._populate_models(self._sel_prov)
+        await self._populate_models(self._sel_prov)
 
-    def _populate_models(self, pkey: str):
+    async def _populate_models(self, pkey: str):
         mlist = self.query_one("#sel-model-list", ListView)
-        mlist.clear()
+        await mlist.clear()
         info   = prov_mod.PROVIDERS[pkey]
         c      = info["color"]
         models = cfg_mod.get_models(self._doc, pkey)
@@ -70,7 +70,7 @@ class SelectorScreen(ModalScreen):
             return
         self.query_one("#sel-hint", Static).update("")
         for m in models:
-            mid = esc(m).replace("/", "-").replace(":", "-")
+            mid = esc(m).replace("/", "-").replace(":", "-").replace(".", "-")
             mlist.append(ListItem(Label(f"[{c}]{esc(m)}[/{c}]"), id=f"smod-{mid}"))
         # pre-select
         idx = 0
@@ -81,13 +81,13 @@ class SelectorScreen(ModalScreen):
         mlist.index = idx
 
     @on(ListView.Highlighted, "#sel-prov-list")
-    def on_prov(self, e):
+    async def on_prov(self, e):
         if e.item and e.item.id:
             k = e.item.id.replace("sprov-", "")
             if k in prov_mod.PROVIDERS:
                 self._sel_prov = k
                 self._sel_mod  = ""
-                self._populate_models(k)
+                await self._populate_models(k)
 
     @on(ListView.Highlighted, "#sel-model-list")
     def on_model(self, e):
@@ -95,7 +95,7 @@ class SelectorScreen(ModalScreen):
             raw    = e.item.id[5:]  # strip "smod-"
             models = cfg_mod.get_models(self._doc, self._sel_prov)
             for m in models:
-                if esc(m).replace("/", "-").replace(":", "-") == raw:
+                if esc(m).replace("/", "-").replace(":", "-").replace(".", "-") == raw:
                     self._sel_mod = m
                     break
 

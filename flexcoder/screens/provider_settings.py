@@ -118,7 +118,7 @@ class ProviderSettingsScreen(ModalScreen):
             mlist.append(ListItem(Label("[dim]No models cached — press Fetch Models[/dim]")))
             return
         for m in models:
-            mid = esc(m).replace("/", "-").replace(":", "-")
+            mid = esc(m).replace("/", "-").replace(":", "-").replace(".", "-")
             mlist.append(ListItem(Label(f"[{c}]{esc(m)}[/{c}]"), id=f"m-{mid}"))
 
     def on_button_pressed(self, e: Button.Pressed):
