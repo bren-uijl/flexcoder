@@ -17,7 +17,7 @@ import requests
 PROVIDERS: dict[str, dict] = {
     "ollama": {
         "name":      "Ollama",
-        "color":     "#5588dd",
+        "color":     "cyan",
         "needs_key":  False,
         "key_cfg":    None,
         "builtin":    True,
