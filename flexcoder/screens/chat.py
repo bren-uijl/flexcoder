@@ -182,12 +182,14 @@ class FlexCoderApp(App):
         else:
             pinfo = prov_mod.PROVIDERS.get(self._provider, {})
             c     = pinfo.get("color", "white")
-            self._render("info",
-                f"Provider: [{c}]{pinfo.get('name', self._provider)}[/{c}]  "
-                f"Model: [{c}]{self._model}[/{c}]  "
-                f"Session: [cyan]{self._session_id}[/cyan]  "
-                f"[dim]cwd: {self._cwd}[/dim]"
-            )
+            # Show basic session info without markup tags
+            info_msg = (
+                f"Provider: {pinfo.get('name', self._provider)}  "
+                f"Model: {self._model or '(none)'}  "
+                f"Session: {self._session_id}  "
+                f"cwd: {self._cwd}"
+                )
+            self._render("info", info_msg)
 
         if self._messages:
             self.query_one("#chat-log", RichLog).write(
